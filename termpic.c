@@ -18,12 +18,14 @@ int main(int argc, const char* argv[])
 	int whitebg = 0;
 	int blackbg = 0;
 	int full_alpha_range = 0;
+	int right_align = 0;
 
 	/* process command-line */
     struct argparse_option options[] = {
         OPT_HELP(),
         OPT_INTEGER('\0', "width", &reqwidth, "Desired width in characters", NULL, 0, 0),
         OPT_INTEGER('\0', "height", &reqheight, "Desired height in characters", NULL, 0, 0),
+        OPT_BOOLEAN('\0', "right", &right_align, "Display image against right border of terminal; preserves cursor position", NULL, 0, 0),
         OPT_BOOLEAN('\0', "no-alpha", &no_alpha_output, "Ignore transparency in image", NULL, 0, 0),
         OPT_BOOLEAN('\0', "full-alpha", &full_alpha_range, "Use full alpha range from source image (may increase fringing)", NULL, 0, 0),
         OPT_BOOLEAN('\0', "white", &whitebg, "Assume a white terminal background instead of black", NULL, 0, 0),
@@ -56,6 +58,11 @@ int main(int argc, const char* argv[])
 	{
 		fprintf(stderr, "Could not load '%s'\n", argv[0]);
 		return -2;
+	}
+	/* save cursor position? */
+	if (right_align)
+	{
+		printf("\e7");fflush(stdout);
 	}
 
 	int had_alpha = (rawchannels == 2 || rawchannels == 4);
@@ -133,6 +140,18 @@ int main(int argc, const char* argv[])
 		}
 	}
 
+	if (right_align)
+	{
+		//for (int i=0; i<(height+1)/2; ++i)
+		//{
+		//	printf("\n");
+		//}		
+		//printf("\e[%dC", width);
+		//printf("\e[%dA", (height+1)/2);
+		//printf("\r");
+		//printf("\e[s");
+	}
+
 	/* output image */
 	for (int y=0; y<height; y+=2)
 	{
@@ -148,8 +167,20 @@ int main(int argc, const char* argv[])
 				printf("\e[38;2;%d;%d;%dm\e[48;2;%d;%d;%dm▄", bg[0], bg[1], bg[2], fg[0], fg[1], fg[2]);
 		}
 		puts("\e[0m"); /* reset + newline */
+		//puts(""); /* reset + newline */
 	}
 	
 	free(resizeddata);
+
+	/* restore cursor position? */
+	if (right_align)
+	{
+		//printf("\e[%dC", width);
+		//printf("\e[%dA", (height+1)/2);
+		//printf("\r");
+		//printf("\e[u");
+		printf("\e8");fflush(stdout);
+	}
+
 	return 0;
 }
